@@ -21,7 +21,7 @@ def summarize_resume():
         file.save(file_path)
         resume_text = extract_text_from_pdf(file_path)
         user_input = 'This is the extracted resume text ' + resume_text + 'and this is the job description ' + job_dec
-        context = 'You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rank the resume. And from the resume structure the releveant data like the skills, education and projects in a json format'
+        context = 'You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rate the resume. And from the resume structure the relevant data like the skills, education, projects and the rating in a json format. Name the keys like Name, Phone, Email, Skills, Education, Work Experience and give the rating in the key Rating.'
         resp = continue_conversation(context, user_input)
         os.remove(file_path)
         return resp

@@ -1,7 +1,7 @@
 import PyPDF2
 import openai
 
-openai.api_key = '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'
+openai.api_key = '<enter your openAI key>'
 
 
 def extract_text_from_pdf(pdf_path):
@@ -23,5 +23,5 @@ def continue_conversation(context, user_input):
     )
     assistant_response = response['choices'][0]['message']['content']
     messages.append({"role":"system", "content":assistant_response})
-
+    print(assistant_response)
     return response
