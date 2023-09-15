@@ -1,11 +1,15 @@
+import os
 import PyPDF2
 import openai
 import json
 import requests
+import assemblyai as aai
+import moviepy.editor as mp
 
 openai.api_key = 'Your API key here'
-
 token = 'Your github PAI here'
+
+aai.settings.api_key = 'Your Assembly API key here'
 
 def extract_text_from_pdf(pdf_path):
     with open(pdf_path, 'rb') as pdf_file:
@@ -31,6 +35,20 @@ def continue_conversation(context, user_input, assistant=None):
     json_str = assistant_response[start_index:end_index+1]
     resume_summary = json.loads(json_str)
     return resume_summary
+
+def ai_summarizer(context, user_input):
+    
+    messages = [{'role': 'system', 'content': context},
+    ]
+    messages.append({"role": "user", "content": user_input})
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=messages
+    )
+    assistant_response = response['choices'][0]['message']['content']
+    messages.append({"role":"system", "content":assistant_response})
+
+    return response
 
 def get_commit_count(user):
     headers = {
@@ -92,3 +110,26 @@ def get_repo_count(username):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return None
+    
+def get_wav_from_mp4(relative_path):
+
+    directory, filename = os.path.split(relative_path)
+    name, extension = os.path.splitext(filename)
+
+    # Load the video
+    video = mp.VideoFileClip(relative_path)
+    
+    # Extract the audio from the video
+    audio_file = video.audio
+    audio_filename = name + '.wav'
+    audio_file.write_audiofile(audio_filename)
+
+    return audio_filename
+
+def get_transcript_from_wav(relative_path):
+
+    transcriber = aai.Transcriber()
+    transcript = transcriber.transcribe(relative_path)
+    text = transcript.text
+
+    return text
