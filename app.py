@@ -1,13 +1,19 @@
 from flask import Flask, request, render_template
 import os
-from utils import continue_conversation, extract_text_from_pdf, get_repo_count, get_commit_count, get_wav_from_mp4, get_transcript_from_wav, ai_summarizer
+from utils import continue_conversation, extract_text_from_pdf, get_repo_count, get_commit_count, get_wav_from_mp4, get_transcript_from_wav, get_stackoverflow_info, ai_summarizer
 import json
+import datetime
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def hello():
     return "Hello"
+
+def exponential_cdf(x):
+    exp_cdf = 1-2 ** -x
+    return exp_cdf
+
 
 @app.route('/resume-summary', methods=['GET', 'POST'])
 def summarize_resume():
@@ -44,9 +50,21 @@ def github_parser():
     username = github_profile_url.split('/')[-1]
     repo_count = get_repo_count(username)
     commit_count = get_commit_count(username)
+    commit_weight = 4
+    repos_weight = 3
+    total_weight = commit_weight + repos_weight
+    thresholds = [1,12.5,25,37.5,50,62.5,75,87.5,100]
+    levels = [9,8,7,6,5,4,3,2,1]
+
+    agg_val = 1 - (commit_weight * exponential_cdf(commit_count / 250) + repos_weight * exponential_cdf(repo_count / 50))/total_weight
+    print('AGGREGATE VALUE: ', agg_val)
+    index = next((i for i, t in enumerate(thresholds) if float(agg_val) * 100 <= t), None)
+
+    rate = levels[index] if index is not None else None
 
     return {
             'repo_count': repo_count,
+            'rate': rate,
             'commit_count': commit_count
         }
 
@@ -72,6 +90,15 @@ def interview_feedback():
     json_str = feedback_data[start_index:end_index+1]
     feedback_data = json.loads(json_str)
     return feedback_data
+
+@app.route('/stackoverflow-details', methods=['GET'])
+def stackoverflow_parser():
+    stackoverflow_profile_url = request.args.get('url')
+    print('profile url is ', stackoverflow_profile_url)
+    userId = stackoverflow_profile_url.split('/')[4]
+    stack_data = get_stackoverflow_info(userId)
+    return str(stack_data)
+    
 
 if __name__ == '__main__':
     app.run(debug=True, port=5007)

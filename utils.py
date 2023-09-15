@@ -9,6 +9,12 @@ import moviepy.editor as mp
 openai.api_key = 'Your API key here'
 token = 'Your github PAI here'
 
+badge_weights = {
+    "bronze": 60,
+    "silver": 80,
+    "gold": 100,
+}
+
 aai.settings.api_key = 'Your Assembly API key here'
 
 def extract_text_from_pdf(pdf_path):
@@ -56,7 +62,7 @@ def get_commit_count(user):
     }
     r = requests.get(f'https://api.github.com/users/{user}/repos', headers=headers)
     repos = json.loads(r.text)
-    total_commits = 0  # Initialize total commit count
+    total_commits = 0 
     
     for repo in repos:
         if repo['fork'] is True:
@@ -131,5 +137,27 @@ def get_transcript_from_wav(relative_path):
     transcriber = aai.Transcriber()
     transcript = transcriber.transcribe(relative_path)
     text = transcript.text
-
     return text
+
+def get_stackoverflow_info(userId):
+    api_url = f'https://api.stackexchange.com/2.2/users/{userId}?site=stackoverflow.com'
+    try:
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            details = response.json()
+            details_string = json.dumps(details)
+            badge_details = json.loads(details_string)
+            badge_counts_object = badge_details["items"][0]["badge_counts"]
+            total_weight = 0
+            for badge in badge_counts_object:
+                total_weight = total_weight + badge_counts_object[badge] * badge_weights[badge]
+            print(total_weight)
+            final_score = total_weight/21000
+            final_rating = final_score*float(10)
+            return final_rating
+        else:
+            print('Failed to retrieve data.')
+            return None
+    except Exception as e:
+        print(f"some error occured: {str(e)}")
+        return None
