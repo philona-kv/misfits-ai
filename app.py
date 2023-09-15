@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template
 import os
-from utils import continue_conversation, extract_text_from_pdf
+from utils import continue_conversation, extract_text_from_pdf, get_repo_count, get_commit_count
 
 app = Flask(__name__)
 
@@ -8,7 +8,7 @@ app = Flask(__name__)
 def hello():
     return "Hello"
 
-@app.route('/resume_summary', methods=['GET', 'POST'])
+@app.route('/resume-summary', methods=['GET', 'POST'])
 def summarize_resume():
     
     if request.method == 'GET':
@@ -26,7 +26,7 @@ def summarize_resume():
         os.remove(file_path)
         return resp
 
-@app.route('/interview_summary', methods=['GET'])
+@app.route('/interview-summary', methods=['GET'])
 def interview_summarizer():
 
     context = "You are a professional interview summariser. I am an client who will provide you the interview conversation \n You must give me the summary of the entire interview highlighting the questions asked and the candidates responses. The summary must be in bullets"
@@ -37,5 +37,19 @@ def interview_summarizer():
 
     return new_response
 
+@app.route('/github-details', methods=['GET'])
+def github_parser():
+    github_profile_url = request.args.get('url')
+    print(github_profile_url)
+    username = github_profile_url.split('/')[-1]
+    repo_count = get_repo_count(username)
+    commit_count = get_commit_count(username)
+
+    return {
+            'repo_count': repo_count,
+            'commit_count': commit_count
+        }
+
 if __name__ == '__main__':
     app.run(debug=True, port=5007)
+  
