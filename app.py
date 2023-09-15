@@ -35,6 +35,10 @@ def extract_text_from_pdf(pdf_path):
             text += reader.pages[page_num].extract_text()
     return text
 
+@app.route('/', methods=['GET'])
+def hello():
+    return "Hello"
+    
 @app.route('/summarize', methods=['GET', 'POST'])
 def summarize_resume():
     
