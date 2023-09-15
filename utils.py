@@ -15,7 +15,7 @@ def extract_text_from_pdf(pdf_path):
             text += reader.pages[page_num].extract_text()
     return text
 
-def continue_conversation(context, user_input):
+def continue_conversation(context, user_input, assistant=None):
     
     messages = [{'role': 'system', 'content': context},
     ]
@@ -26,8 +26,11 @@ def continue_conversation(context, user_input):
     )
     assistant_response = response['choices'][0]['message']['content']
     messages.append({"role":"system", "content":assistant_response})
-
-    return response
+    start_index = assistant_response.find('{')
+    end_index = assistant_response.rfind('}')
+    json_str = assistant_response[start_index:end_index+1]
+    resume_summary = json.loads(json_str)
+    return resume_summary
 
 def get_commit_count(user):
     headers = {

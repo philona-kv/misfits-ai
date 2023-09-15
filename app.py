@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 import os
 from utils import continue_conversation, extract_text_from_pdf, get_repo_count, get_commit_count
+import datetime
 
 app = Flask(__name__)
 
@@ -10,7 +11,6 @@ def hello():
 
 @app.route('/resume-summary', methods=['GET', 'POST'])
 def summarize_resume():
-    
     if request.method == 'GET':
         return render_template("upload.html")
     
@@ -21,7 +21,7 @@ def summarize_resume():
         file.save(file_path)
         resume_text = extract_text_from_pdf(file_path)
         user_input = 'This is the extracted resume text ' + resume_text + 'and this is the job description ' + job_dec
-        context = 'You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rate the resume. And from the resume structure the relevant data like the skills, education, projects and the rating in a json format. Name the keys like Name, Phone, Email, Skills, Education, Work Experience and give the rating in the key Rating.'
+        context = 'You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rate the resume out of 10. From the resume get the name, phone, email, skills, rating and the summary about the match between the resume and job description in a json object. The object keys strictly should be name, phone, email, skills, summary respectively. The skills should be an array of strings'
         resp = continue_conversation(context, user_input)
         os.remove(file_path)
         return resp
