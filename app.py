@@ -1,45 +1,14 @@
-from flask import Flask, request, jsonify, render_template
-import PyPDF2
-import string
+from flask import Flask, request, render_template
 import os
-import openai
+from utils import continue_conversation, extract_text_from_pdf
 
 app = Flask(__name__)
-
-
-openai.api_key = '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'
-
-messages = [{'role': 'system', 'content': "You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rank the resume. And from the resume structure the releveant data like the skills, education and projects in a json format"},
-  ]
-
-
-def continue_conversation(messages, user_input):
-    messages.append({"role": "user", "content": user_input})
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=messages
-    )
-
-    assistant_response = response['choices'][0]['message']['content']
-    messages.append({"role":"system", "content":assistant_response})
-    print(assistant_response)
-    return response
-
-
-def extract_text_from_pdf(pdf_path):
-    with open(pdf_path, 'rb') as pdf_file:
-        reader = PyPDF2.PdfReader(pdf_file)
-        text = ""
-        for page_num in range(len(reader.pages)):
-            text += reader.pages[page_num].extract_text()
-    return text
 
 @app.route('/', methods=['GET'])
 def hello():
     return "Hello"
-    
-@app.route('/summarize', methods=['GET', 'POST'])
+
+@app.route('/resume_summary', methods=['GET', 'POST'])
 def summarize_resume():
     
     if request.method == 'GET':
@@ -52,10 +21,21 @@ def summarize_resume():
         file.save(file_path)
         resume_text = extract_text_from_pdf(file_path)
         user_input = 'This is the extracted resume text ' + resume_text + 'and this is the job description ' + job_dec
-        resp = continue_conversation(messages, user_input)
+        context = 'You are a professional resume and job description summariser. I am a client who will give extracted resume text and job description you need find the matching between the resume text and the job description and you need to rank the resume. And from the resume structure the releveant data like the skills, education and projects in a json format'
+        resp = continue_conversation(context, user_input)
         os.remove(file_path)
         return resp
 
+@app.route('/interview_summary', methods=['GET'])
+def interview_summarizer():
+
+    context = "You are a professional interview summariser. I am an client who will provide you the interview conversation \n You must give me the summary of the entire interview highlighting the questions asked and the candidates responses. The summary must be in bullets"
+    
+    user_input = "Summarise the following interview: Morning ma'am. Good morning. Can I hire resume? Yes ma'am. Okay, your good name? Madhuri. Okay Madhuri, please introduce yourself. I am Madhuri from JPK but currently staying in Hyderabad to build an independent career and I completed my graduation in Srijatana Institute of Technological Sciences from Electronics and Communication Engineering. During my graduation I had a project on brain tumor detection. Apart from a qualification I am good at Java and C. I can speak English and Peru. Regarding my strengths, I am a self motivated person and I can easily adopt myself to any environment. Coming to my weakness, I always need perfection in my work. So I will take little bit more time to complete my work. Later I realized it so now I'm trying to overcome it. Okay, good to know you mahdri. Okay, what are your technical skills? Okay why should I hire you as a fresher? I have theoretical knowledge so I'm looking for a platform to implement my skills and knowledge. If you give me a chance, I will put my effect 100% effort for the growth of the company. What are your Hobies? In my free time I regularly use today exercise and I'm interested in reading books. Okay, that's good. So why do you think you are good fit for this job? Based on this requirement, my skills are matching with this profile and also I'm an adaptability person so I can easily adapt to any environment and I will give my 100% to the growth of this company. Okay, so what do you know about this company? As per my knowledge, it is a fastest growing company and it provides lot of opportunities. And I hear from the employees that the work environment is good and supporting employees also. So if I hire you after five years where you are going to see yourself? I would like to see myself in a respectable position of that organization in leading position. With my leadership skills I am valuable person with more responsibilities. Okay, so how would you be a good asset for our organization? I will work hard and I will give my best to the company. And with my never give up attitude I will try to achieve a best position in that organization and I will also increase the growth of this organization. Okay, that's good. So what are your salary expectations as a fresher? My first priority is to enhance my skills and knowledge. So I always accept what you offer as per the company now which will fulfill my economical needs. So how long can you give services to work? I would like to work as long as the company needs me and based on carrying growth I will continue when the company will be satisfied with my work and also I would like to have better position. So how do you like to rate yourself from one to ten? I would like to rate myself as a because no one is perfect and there is always a scope for learning and improvement and I feel that continuous learning is fundamental part of professional and personal. Okay so kind thanks for coming we will respond you. We will get back to soon okay? Thank you. Thank you."
+    
+    new_response = continue_conversation(context, user_input)
+
+    return new_response
 
 if __name__ == '__main__':
     app.run(debug=True, port=5007)
