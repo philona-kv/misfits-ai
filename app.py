@@ -57,7 +57,6 @@ def github_parser():
     levels = [9,8,7,6,5,4,3,2,1]
 
     agg_val = 1 - (commit_weight * exponential_cdf(commit_count / 250) + repos_weight * exponential_cdf(repo_count / 50))/total_weight
-    print('AGGREGATE VALUE: ', agg_val)
     index = next((i for i, t in enumerate(thresholds) if float(agg_val) * 100 <= t), None)
 
     rate = levels[index] if index is not None else None
@@ -98,7 +97,33 @@ def stackoverflow_parser():
     userId = stackoverflow_profile_url.split('/')[4]
     stack_data = get_stackoverflow_info(userId)
     return str(stack_data)
-    
+
+@app.route('/get-profiles', methods=['GET'])
+def get_profiles():
+    data = request.get_json()
+    github_profile_url=data["github"]
+    username = github_profile_url.split('/')[-1]
+    repo_count = get_repo_count(username)
+    commit_count = get_commit_count(username)
+    commit_weight = 4
+    repos_weight = 3
+    total_weight = commit_weight + repos_weight
+    thresholds = [1,12.5,25,37.5,50,62.5,75,87.5,100]
+    levels = [9,8,7,6,5,4,3,2,1]
+
+    agg_val = 1 - (commit_weight * exponential_cdf(commit_count / 250) + repos_weight * exponential_cdf(repo_count / 50))/total_weight
+    index = next((i for i, t in enumerate(thresholds) if float(agg_val) * 100 <= t), None)
+
+    rate = levels[index] if index is not None else None
+
+    stackoverflow_profile_url=data["stackoverflow"]
+    userId = stackoverflow_profile_url.split('/')[4]
+    stack_data = get_stackoverflow_info(userId)
+
+    return {
+        "githubRating": rate,
+        "stackOverflowRating": stack_data,
+    }
 
 if __name__ == '__main__':
     app.run(debug=True, port=5007)
