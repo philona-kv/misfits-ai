@@ -1,3 +1,7 @@
-flask
-PyPDF2
-openai
+flask~=2.3.3
+PyPDF2~=3.0.1
+openai~=0.28.0
+assemblyai~=0.17.0
+moviepy~=1.0.3
+
+requests~=2.31.0
